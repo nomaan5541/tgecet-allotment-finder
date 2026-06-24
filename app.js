@@ -29,6 +29,7 @@
     const resultsFooter = document.getElementById('resultsFooter');
     const loadMoreBtn = document.getElementById('loadMoreBtn');
     const sortBy = document.getElementById('sortBy');
+    const filterBranch = document.getElementById('filterBranch');
     const totalRecords = document.getElementById('totalRecords');
     const heroCount = document.getElementById('heroCount');
     const collegeChips = document.getElementById('collegeChips');
@@ -44,6 +45,7 @@
             heroCount.textContent = allData.length.toLocaleString() + '+';
             loadingState.style.display = 'none';
             populateCollegeChips();
+            populateBranchFilter();
             console.log(`Loaded ${allData.length} records`);
         } catch (err) {
             loadingState.style.display = 'none';
@@ -78,6 +80,25 @@
         });
     }
 
+    // --- Branch Filter ---
+    function populateBranchFilter() {
+        const branches = new Map();
+        allData.forEach(r => {
+            const code = r.bc || r.bn;
+            if (code && !branches.has(code)) {
+                branches.set(code, r.bn || r.bc);
+            }
+        });
+
+        const sorted = [...branches.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+        sorted.forEach(([code, name]) => {
+            const option = document.createElement('option');
+            option.value = code;
+            option.textContent = name.length > 30 ? code + ' - ' + name.substring(0, 30) + '...' : code + ' - ' + name;
+            filterBranch.appendChild(option);
+        });
+    }
+
     // --- Search ---
     function performSearch() {
         const searchType = currentTab;
@@ -107,16 +128,26 @@
         }
 
         // Filter data
+        const selectedBranch = filterBranch.value;
         filteredResults = allData.filter(r => {
+            let matchQuery = false;
             if (searchType === 'name') {
-                return r.name && r.name.toLowerCase().includes(query);
+                matchQuery = r.name && r.name.toLowerCase().includes(query);
             } else if (searchType === 'roll') {
-                return r.ht && r.ht.toUpperCase().includes(query);
+                matchQuery = r.ht && r.ht.toUpperCase().includes(query);
             } else if (searchType === 'college') {
-                return (r.cc && r.cc.toLowerCase().includes(query)) ||
-                       (r.cn && r.cn.toLowerCase().includes(query));
+                matchQuery = (r.cc && r.cc.toLowerCase().includes(query)) ||
+                             (r.cn && r.cn.toLowerCase().includes(query));
             }
-            return false;
+            
+            if (!matchQuery) return false;
+            
+            if (selectedBranch !== 'all') {
+                const branchCode = r.bc || r.bn;
+                if (branchCode !== selectedBranch) return false;
+            }
+            
+            return true;
         });
 
         // Sort
@@ -321,6 +352,13 @@
                 resultsGrid.innerHTML = '';
                 showMoreResults();
             }
+        });
+
+        // Filter change
+        filterBranch.addEventListener('change', () => {
+            if (currentTab === 'name' && nameSearch.value.trim().length >= 2) performSearch();
+            else if (currentTab === 'roll' && rollSearch.value.trim().length >= 2) performSearch();
+            else if (currentTab === 'college' && collegeSearch.value.trim().length >= 2) performSearch();
         });
 
         // Load more
