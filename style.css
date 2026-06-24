@@ -1179,111 +1179,7 @@ body {
 .dot-m { width: 8px; height: 8px; background: #818cf8; border-radius: 50%; }
 .dot-f { width: 8px; height: 8px; background: #fb7185; border-radius: 50%; }
 
-/* --- Toppers Table --- */
-.table-wrapper {
-    width: 100%;
-    overflow-x: auto;
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-glass);
-    margin-bottom: 20px;
-}
 
-.toppers-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 600px;
-    font-size: 14px;
-}
-
-.toppers-table th {
-    background: rgba(0, 0, 0, 0.2);
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    padding: 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-glass);
-}
-
-.toppers-table td {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border-subtle);
-    color: var(--text-primary);
-}
-
-.toppers-table tr:hover td {
-    background: var(--bg-glass);
-}
-
-.toppers-table .rank-col {
-    color: var(--accent-primary);
-    font-weight: 800;
-    font-size: 16px;
-}
-
-.toppers-table .name-col {
-    font-weight: 600;
-}
-
-.toppers-table .mono-col {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-/* --- Table Pagination --- */
-.table-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px;
-    border-top: 1px solid var(--border-glass);
-}
-
-.table-footer span {
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-.pagination-controls {
-    display: flex;
-    gap: 6px;
-}
-
-.page-btn {
-    background: transparent;
-    border: 1px solid var(--border-glass);
-    color: var(--text-primary);
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.page-btn:hover {
-    background: var(--bg-glass);
-    border-color: var(--border-subtle);
-}
-
-.page-btn.active {
-    background: var(--accent-primary);
-    color: white;
-    border-color: var(--accent-primary);
-    font-weight: 600;
-}
-
-.page-btn.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
 
 /* --- Responsive --- */
 @media (max-width: 768px) {
@@ -1469,3 +1365,87 @@ body {
     color: var(--accent-primary);
     background: var(--bg-glass);
 }
+
+/* --- Install App Button --- */
+.install-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    transition: all var(--transition-fast);
+}
+
+.install-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+/* --- Predictor Banner --- */
+.predictor-banner {
+    max-width: var(--max-width);
+    margin: 0 auto 30px;
+    padding: 0 20px;
+}
+
+.predictor-content {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: var(--radius-lg);
+    padding: 24px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.predictor-text h3 {
+    margin: 0 0 8px 0;
+    color: var(--accent-primary);
+    font-size: 20px;
+}
+
+.predictor-text p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 15px;
+}
+
+.predictor-btn {
+    background: var(--accent-primary);
+    color: white;
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    text-decoration: none;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    transition: all 0.2s ease;
+}
+
+.predictor-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    color: white;
+}
+
+@media (max-width: 600px) {
+    .predictor-content {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    .predictor-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+

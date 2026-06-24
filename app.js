@@ -12,7 +12,6 @@
     let displayedCount = 0;
     const PAGE_SIZE = 30;
     let currentTab = 'name';
-    let currentToppersPage = 1;
     let debounceTimer = null;
 
     // DOM Elements
@@ -126,19 +125,6 @@
                 hideResults();
                 return;
             }
-        } else if (searchType === 'toppers') {
-            // For toppers, no query is needed
-            const toppersHint = document.getElementById('toppersHint');
-            if (toppersHint) {
-                const selectedBranch = filterBranch.value;
-                if (selectedBranch === 'all') {
-                    toppersHint.textContent = "Showing Top Students in the State 🏆";
-                } else {
-                    const optionText = filterBranch.options[filterBranch.selectedIndex].text;
-                    const branchName = optionText.includes(' - ') ? optionText.split(' - ')[1] : optionText;
-                    toppersHint.textContent = `Showing Top Students for ${branchName} 🏆`;
-                }
-            }
         }
 
         // Filter data
@@ -152,8 +138,6 @@
             } else if (searchType === 'college') {
                 matchQuery = (r.cc && r.cc.toLowerCase().includes(query)) ||
                              (r.cn && r.cn.toLowerCase().includes(query));
-            } else if (searchType === 'toppers') {
-                matchQuery = true; // All records are considered, we'll sort and slice later
             }
             
             if (!matchQuery) return false;
@@ -170,7 +154,6 @@
         sortResults();
 
         // Display
-        currentToppersPage = 1;
         displayedCount = 0;
         resultsGrid.innerHTML = '';
 
@@ -186,7 +169,7 @@
             if (resultsActions) {
                 resultsActions.style.display = 'flex';
                 if (sortBy) {
-                    sortBy.style.display = searchType === 'toppers' ? 'none' : 'block';
+                    sortBy.style.display = 'block';
                 }
             }
             
@@ -274,13 +257,6 @@
     }
 
     function sortResults() {
-        if (currentTab === 'toppers') {
-            filteredResults.sort((a, b) => {
-                return (parseFloat(a.rank) || 99999) - (parseFloat(b.rank) || 99999);
-            });
-            return;
-        }
-
         const criterion = sortBy.value;
         filteredResults.sort((a, b) => {
             if (criterion === 'name') return (a.name || '').localeCompare(b.name || '');
@@ -294,109 +270,22 @@
     function showMoreResults() {
         const fragment = document.createDocumentFragment();
 
-        if (currentTab === 'toppers') {
-            const pageSize = 100;
-            const totalPages = Math.ceil(filteredResults.length / pageSize);
-            const startIdx = (currentToppersPage - 1) * pageSize;
-            const endIdx = Math.min(startIdx + pageSize, filteredResults.length);
+        const endIdx = Math.min(displayedCount + PAGE_SIZE, filteredResults.length);
+        for (let i = displayedCount; i < endIdx; i++) {
+            const card = createResultCard(filteredResults[i], i);
+            fragment.appendChild(card);
+        }
+        resultsGrid.appendChild(fragment);
+        displayedCount = endIdx;
 
-            resultsGrid.innerHTML = `
-                <div class="table-wrapper">
-                    <table class="toppers-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 80px;">Rank</th>
-                                <th>Name</th>
-                                <th>Hall Ticket</th>
-                                <th>Branch</th>
-                                <th>Category</th>
-                                <th>Allotted College</th>
-                            </tr>
-                        </thead>
-                        <tbody id="toppersTbody"></tbody>
-                    </table>
-                    <div class="table-footer">
-                        <span>Showing ${filteredResults.length === 0 ? 0 : startIdx + 1} to ${endIdx} of ${filteredResults.length.toLocaleString()} results</span>
-                        <div class="pagination-controls" id="paginationControls"></div>
-                    </div>
-                </div>
-            `;
-            const tbody = document.getElementById('toppersTbody');
-            for (let i = startIdx; i < endIdx; i++) {
-                const tr = createTableCard(filteredResults[i], i - startIdx);
-                fragment.appendChild(tr);
-            }
-            tbody.appendChild(fragment);
-
-            // Generate Pagination
-            const paginationControls = document.getElementById('paginationControls');
-            if (totalPages > 1) {
-                let startPage = Math.max(1, currentToppersPage - 2);
-                let endPage = Math.min(totalPages, startPage + 4);
-                if (endPage - startPage < 4) {
-                    startPage = Math.max(1, endPage - 4);
-                }
-
-                if (currentToppersPage > 1) {
-                    paginationControls.appendChild(createPageBtn('<', currentToppersPage - 1));
-                }
-                for (let p = startPage; p <= endPage; p++) {
-                    paginationControls.appendChild(createPageBtn(p, p, p === currentToppersPage));
-                }
-                if (currentToppersPage < totalPages) {
-                    paginationControls.appendChild(createPageBtn('>', currentToppersPage + 1));
-                }
-            }
-
-            resultsFooter.style.display = 'none';
+        if (displayedCount < filteredResults.length) {
+            resultsFooter.style.display = 'block';
+            loadMoreBtn.textContent = `Show More (${filteredResults.length - displayedCount} remaining)`;
         } else {
-            const endIdx = Math.min(displayedCount + PAGE_SIZE, filteredResults.length);
-            for (let i = displayedCount; i < endIdx; i++) {
-                const card = createResultCard(filteredResults[i], i);
-                fragment.appendChild(card);
-            }
-            resultsGrid.appendChild(fragment);
-            displayedCount = endIdx;
-
-            if (displayedCount < filteredResults.length) {
-                resultsFooter.style.display = 'block';
-                loadMoreBtn.textContent = `Show More (${filteredResults.length - displayedCount} remaining)`;
-            } else {
-                resultsFooter.style.display = 'none';
-            }
+            resultsFooter.style.display = 'none';
         }
     }
 
-    function createPageBtn(label, pageNum, isActive = false) {
-        const btn = document.createElement('button');
-        btn.className = `page-btn ${isActive ? 'active' : ''}`;
-        btn.textContent = label;
-        btn.addEventListener('click', () => {
-            currentToppersPage = pageNum;
-            showMoreResults();
-        });
-        return btn;
-    }
-
-    function createTableCard(record, index) {
-        const tr = document.createElement('tr');
-        tr.style.animation = 'fadeIn 0.3s ease';
-        tr.style.animationDelay = `${(index % 100) * 10}ms`;
-        tr.style.animationFillMode = 'both';
-        
-        const rankVal = parseFloat(record.rank) || 0;
-        const formattedRank = '#' + rankVal.toFixed(2);
-
-        tr.innerHTML = `
-            <td class="rank-col">${formattedRank}</td>
-            <td class="name-col">${escapeHtml(record.name || 'N/A')}</td>
-            <td class="mono-col">${escapeHtml(record.ht || 'N/A')}</td>
-            <td>${escapeHtml(record.bn || record.bc || 'N/A')}</td>
-            <td class="mono-col">${escapeHtml(record.caste || record.seat_cat || 'OC').split('_')[0]}</td>
-            <td class="mono-col" style="font-weight:600; color:var(--text-primary);">${escapeHtml(record.cn || record.cc || 'N/A')}</td>
-        `;
-        return tr;
-    }
 
     function createResultCard(record, index) {
         const card = document.createElement('div');
@@ -538,16 +427,12 @@
 
         hideResults();
 
-        if (tab === 'toppers') {
-            performSearch();
-        } else {
-            // Auto-focus the input
+        // Auto-focus the input
             setTimeout(() => {
                 if (tab === 'name') nameSearch.focus();
                 else if (tab === 'roll') rollSearch.focus();
                 else if (tab === 'college') collegeSearch.focus();
             }, 100);
-        }
     }
 
     // --- Event Listeners ---
@@ -610,13 +495,9 @@
 
         // Filter change
         filterBranch.addEventListener('change', () => {
-            if (currentTab === 'toppers') {
+            const query = getActiveQuery();
+            if (query.length >= 2) {
                 performSearch();
-            } else {
-                const query = getActiveQuery();
-                if (query.length >= 2) {
-                    performSearch();
-                }
             }
         });
 
@@ -699,4 +580,43 @@
             });
         });
     }
+
+    // PWA Install Prompt Logic
+    let deferredPrompt;
+    const installAppBtn = document.getElementById('installAppBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the mini-infobar from appearing on mobile
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Update UI notify the user they can install the PWA
+        if (installAppBtn) {
+            installAppBtn.style.display = 'flex';
+        }
+    });
+
+    if (installAppBtn) {
+        installAppBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            // Hide the app provided install promotion
+            installAppBtn.style.display = 'none';
+            // Show the install prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            // We've used the prompt, and can't use it again, throw it away
+            deferredPrompt = null;
+        });
+    }
+
+    window.addEventListener('appinstalled', () => {
+        // Hide the app-provided install promotion
+        if (installAppBtn) installAppBtn.style.display = 'none';
+        // Clear the deferredPrompt so it can be garbage collected
+        deferredPrompt = null;
+        console.log('PWA was installed');
+    });
+
 })();
