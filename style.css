@@ -253,6 +253,33 @@ body {
     text-transform: uppercase;
 }
 
+.header-middle {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    padding: 8px 16px;
+    border-radius: 100px;
+}
+
+.header-creator-link {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-decoration: none;
+    font-weight: 700;
+    transition: opacity var(--transition-fast);
+}
+
+.header-creator-link:hover {
+    opacity: 0.8;
+}
+
 .stats-badge {
     display: flex;
     align-items: center;
@@ -859,6 +886,10 @@ body {
     
     .logo-subtitle {
         font-size: 9px;
+    }
+
+    .header-middle {
+        display: none;
     }
     
     .stats-badge {
