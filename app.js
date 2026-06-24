@@ -128,6 +128,17 @@
             }
         } else if (searchType === 'toppers') {
             // For toppers, no query is needed
+            const toppersHint = document.getElementById('toppersHint');
+            if (toppersHint) {
+                const selectedBranch = filterBranch.value;
+                if (selectedBranch === 'all') {
+                    toppersHint.textContent = "Showing Top Students in the State 🏆";
+                } else {
+                    const optionText = filterBranch.options[filterBranch.selectedIndex].text;
+                    const branchName = optionText.includes(' - ') ? optionText.split(' - ')[1] : optionText;
+                    toppersHint.textContent = `Showing Top Students for ${branchName} 🏆`;
+                }
+            }
         }
 
         // Filter data
@@ -599,9 +610,14 @@
 
         // Filter change
         filterBranch.addEventListener('change', () => {
-            if (currentTab === 'name' && nameSearch.value.trim().length >= 2) performSearch();
-            else if (currentTab === 'roll' && rollSearch.value.trim().length >= 2) performSearch();
-            else if (currentTab === 'college' && collegeSearch.value.trim().length >= 2) performSearch();
+            if (currentTab === 'toppers') {
+                performSearch();
+            } else {
+                const query = getActiveQuery();
+                if (query.length >= 2) {
+                    performSearch();
+                }
+            }
         });
 
         // Load more
