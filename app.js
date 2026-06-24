@@ -120,11 +120,13 @@
             }
         } else if (searchType === 'college') {
             query = collegeSearch.value.trim().toLowerCase();
-            clearCollege.style.display = query ? 'flex' : 'none';
+            if(clearCollege) clearCollege.style.display = query ? 'flex' : 'none';
             if (query.length < 2) {
                 hideResults();
                 return;
             }
+        } else if (searchType === 'toppers') {
+            // For toppers, no query is needed
         }
 
         // Filter data
@@ -138,6 +140,8 @@
             } else if (searchType === 'college') {
                 matchQuery = (r.cc && r.cc.toLowerCase().includes(query)) ||
                              (r.cn && r.cn.toLowerCase().includes(query));
+            } else if (searchType === 'toppers') {
+                matchQuery = true; // All records are considered, we'll sort and slice later
             }
             
             if (!matchQuery) return false;
@@ -164,15 +168,108 @@
             emptyState.style.display = 'none';
             resultsSection.style.display = 'block';
             resultsCount.textContent = filteredResults.length.toLocaleString();
+            
+            const resultsActions = document.querySelector('.results-actions');
+            if (resultsActions) {
+                resultsActions.style.display = searchType === 'toppers' ? 'none' : 'flex';
+            }
+            
+            updateCollegeAnalytics(searchType);
             showMoreResults();
         }
     }
 
+    function updateCollegeAnalytics(searchType) {
+        const analyticsDiv = document.getElementById('collegeAnalytics');
+        if (searchType !== 'college' || filteredResults.length === 0) {
+            if(analyticsDiv) analyticsDiv.style.display = 'none';
+            return;
+        }
+
+        // Only show if all filtered results belong to the SAME college
+        const firstCollegeCode = filteredResults[0].cc;
+        const allSameCollege = filteredResults.every(r => r.cc === firstCollegeCode);
+        
+        if (!allSameCollege) {
+            if(analyticsDiv) analyticsDiv.style.display = 'none';
+            return;
+        }
+
+        if(analyticsDiv) analyticsDiv.style.display = 'block';
+        
+        document.getElementById('analyticsCollegeName').textContent = filteredResults[0].cn || 'Unknown College';
+        document.getElementById('analyticsCollegeCode').textContent = firstCollegeCode;
+
+        // Calculate Rank Cutoffs
+        let minRank = Infinity;
+        let maxRank = -Infinity;
+        let maleCount = 0;
+        let femaleCount = 0;
+        const branchCounts = {};
+
+        filteredResults.forEach(r => {
+            const rank = parseInt(r.rank);
+            if (!isNaN(rank)) {
+                if (rank < minRank) minRank = rank;
+                if (rank > maxRank) maxRank = rank;
+            }
+
+            const sex = (r.sex || '').toLowerCase();
+            if (sex === 'm') maleCount++;
+            else if (sex === 'f') femaleCount++;
+
+            const branch = r.bc || r.bn || 'Unknown';
+            branchCounts[branch] = (branchCounts[branch] || 0) + 1;
+        });
+
+        // Set Ranks
+        if (minRank === Infinity) {
+            document.getElementById('statCutoff').textContent = 'N/A';
+        } else {
+            document.getElementById('statCutoff').textContent = `${minRank} - ${maxRank}`;
+        }
+
+        // Set Top Branch
+        let topBranch = 'N/A';
+        let maxCount = 0;
+        for (const [branch, count] of Object.entries(branchCounts)) {
+            if (count > maxCount) {
+                maxCount = count;
+                topBranch = branch;
+            }
+        }
+        document.getElementById('statTopBranch').textContent = topBranch;
+
+        // Set Gender Ratio
+        const totalGender = maleCount + femaleCount;
+        if (totalGender > 0) {
+            const mPct = Math.round((maleCount / totalGender) * 100);
+            const fPct = 100 - mPct;
+            document.getElementById('barMale').style.width = `${mPct}%`;
+            document.getElementById('barFemale').style.width = `${fPct}%`;
+            document.getElementById('statMale').textContent = `${mPct}%`;
+            document.getElementById('statFemale').textContent = `${fPct}%`;
+        } else {
+            document.getElementById('barMale').style.width = `50%`;
+            document.getElementById('barFemale').style.width = `50%`;
+            document.getElementById('statMale').textContent = `50%`;
+            document.getElementById('statFemale').textContent = `50%`;
+        }
+    }
+
     function sortResults() {
+        if (currentTab === 'toppers') {
+            filteredResults.sort((a, b) => {
+                return (parseFloat(a.rank) || 99999) - (parseFloat(b.rank) || 99999);
+            });
+            filteredResults = filteredResults.slice(0, 100);
+            return;
+        }
+
         const criterion = sortBy.value;
         filteredResults.sort((a, b) => {
             if (criterion === 'name') return (a.name || '').localeCompare(b.name || '');
-            if (criterion === 'rank') return (parseInt(a.rank) || 99999) - (parseInt(b.rank) || 99999);
+            if (criterion === 'rank') return (parseFloat(a.rank) || 99999) - (parseFloat(b.rank) || 99999);
             if (criterion === 'college') return (a.cn || '').localeCompare(b.cn || '');
             if (criterion === 'branch') return (a.bn || '').localeCompare(b.bn || '');
             return 0;
@@ -243,10 +340,61 @@
                     <span class="seat-badge">${record.seat_cat || 'N/A'}</span>
                 </div>
             </div>
+            <div class="card-actions">
+                <button class="share-btn" onclick="window.handleShare(this, '${escapeRegex(record.name || 'Student').replace(/'/g, "\\'")}')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line>
+                    </svg>
+                    Share Result
+                </button>
+            </div>
         `;
 
         return card;
     }
+
+    window.handleShare = async function(button, name) {
+        const card = button.closest('.result-card');
+        button.style.display = 'none'; // hide share button during capture
+        
+        // Add watermark
+        const watermark = document.createElement('div');
+        watermark.className = 'card-watermark';
+        watermark.innerHTML = '🔍 Found via TGECET Finder by <b>@VIRUS_BOSS</b>';
+        card.appendChild(watermark);
+
+        // Add confetti!
+        if (window.confetti) {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#6366f1', '#8b5cf6', '#06b6d4', '#22c55e']
+            });
+        }
+
+        try {
+            const canvas = await html2canvas(card, {
+                backgroundColor: '#141420', // var(--bg-card)
+                scale: 2,
+                logging: false,
+                useCORS: true
+            });
+            
+            const link = document.createElement('a');
+            link.download = `TGECET_Result_${name.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (err) {
+            console.error('Error generating image:', err);
+            alert('Failed to generate shareable image.');
+        } finally {
+            if(card.contains(watermark)) {
+                card.removeChild(watermark);
+            }
+            button.style.display = 'flex'; // restore share button
+        }
+    };
 
     function highlightText(text, query, shouldHighlight) {
         if (!shouldHighlight || !query || query.length < 2) return escapeHtml(text);
@@ -288,12 +436,16 @@
 
         hideResults();
 
-        // Auto-focus the input
-        setTimeout(() => {
-            if (tab === 'name') nameSearch.focus();
-            else if (tab === 'roll') rollSearch.focus();
-            else if (tab === 'college') collegeSearch.focus();
-        }, 100);
+        if (tab === 'toppers') {
+            performSearch();
+        } else {
+            // Auto-focus the input
+            setTimeout(() => {
+                if (tab === 'name') nameSearch.focus();
+                else if (tab === 'roll') rollSearch.focus();
+                else if (tab === 'college') collegeSearch.focus();
+            }, 100);
+        }
     }
 
     // --- Event Listeners ---
@@ -374,6 +526,51 @@
             }
         });
 
+        // GitHub Banner Confetti
+        const ghBtn = document.querySelector('.gh-btn');
+        if (ghBtn) {
+            ghBtn.addEventListener('click', (e) => {
+                if (window.confetti) {
+                    confetti({
+                        particleCount: 150,
+                        spread: 100,
+                        origin: { y: 0.9 },
+                        zIndex: 2000
+                    });
+                }
+            });
+        }
+
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = document.querySelector('.sun-icon');
+        const moonIcon = document.querySelector('.moon-icon');
+
+        function setTheme(theme) {
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-mode');
+                if(sunIcon) sunIcon.style.display = 'none';
+                if(moonIcon) moonIcon.style.display = 'block';
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.remove('light-mode');
+                if(sunIcon) sunIcon.style.display = 'block';
+                if(moonIcon) moonIcon.style.display = 'none';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Initialize theme from storage or default to dark
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        setTheme(savedTheme);
+
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.classList.contains('light-mode') ? 'light' : 'dark';
+                setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+            });
+        }
+
         // Load data
         loadData();
     }
@@ -383,5 +580,16 @@
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
+    }
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').then(registration => {
+                console.log('SW registered: ', registration);
+            }).catch(registrationError => {
+                console.log('SW registration failed: ', registrationError);
+            });
+        });
     }
 })();

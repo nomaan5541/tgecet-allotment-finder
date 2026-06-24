@@ -1,0 +1,16 @@
+{
+  "name": "TGECET 2026 College Allotment Finder",
+  "short_name": "TGECET Finder",
+  "description": "Find your friends' college allotments for TGECET 2026 easily. Search by name, hall ticket, or browse by college.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Graduation_hat.svg/1024px-Graduation_hat.svg.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ]
+}
