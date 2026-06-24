@@ -369,7 +369,7 @@
 
     function createPageBtn(label, pageNum, isActive = false) {
         const btn = document.createElement('button');
-        btn.className = \`page-btn \${isActive ? 'active' : ''}\`;
+        btn.className = `page-btn ${isActive ? 'active' : ''}`;
         btn.textContent = label;
         btn.addEventListener('click', () => {
             currentToppersPage = pageNum;
@@ -381,20 +381,20 @@
     function createTableCard(record, index) {
         const tr = document.createElement('tr');
         tr.style.animation = 'fadeIn 0.3s ease';
-        tr.style.animationDelay = \`\${(index % 100) * 10}ms\`;
+        tr.style.animationDelay = `${(index % 100) * 10}ms`;
         tr.style.animationFillMode = 'both';
         
         const rankVal = parseFloat(record.rank) || 0;
         const formattedRank = '#' + rankVal.toFixed(2);
 
-        tr.innerHTML = \`
-            <td class="rank-col">\${formattedRank}</td>
-            <td class="name-col">\${escapeHtml(record.name || 'N/A')}</td>
-            <td class="mono-col">\${escapeHtml(record.ht || 'N/A')}</td>
-            <td>\${escapeHtml(record.bn || record.bc || 'N/A')}</td>
-            <td class="mono-col">\${escapeHtml(record.caste || record.seat_cat || 'OC').split('_')[0]}</td>
-            <td class="mono-col" style="font-weight:600; color:var(--text-primary);">\${escapeHtml(record.cn || record.cc || 'N/A')}</td>
-        \`;
+        tr.innerHTML = `
+            <td class="rank-col">${formattedRank}</td>
+            <td class="name-col">${escapeHtml(record.name || 'N/A')}</td>
+            <td class="mono-col">${escapeHtml(record.ht || 'N/A')}</td>
+            <td>${escapeHtml(record.bn || record.bc || 'N/A')}</td>
+            <td class="mono-col">${escapeHtml(record.caste || record.seat_cat || 'OC').split('_')[0]}</td>
+            <td class="mono-col" style="font-weight:600; color:var(--text-primary);">${escapeHtml(record.cn || record.cc || 'N/A')}</td>
+        `;
         return tr;
     }
 
