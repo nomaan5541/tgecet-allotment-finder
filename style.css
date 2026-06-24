@@ -1179,6 +1179,61 @@ body {
 .dot-m { width: 8px; height: 8px; background: #818cf8; border-radius: 50%; }
 .dot-f { width: 8px; height: 8px; background: #fb7185; border-radius: 50%; }
 
+/* --- Toppers Table --- */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-glass);
+    margin-bottom: 20px;
+}
+
+.toppers-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+    font-size: 14px;
+}
+
+.toppers-table th {
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.toppers-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+}
+
+.toppers-table tr:hover td {
+    background: var(--bg-glass);
+}
+
+.toppers-table .rank-col {
+    color: var(--accent-primary);
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.toppers-table .name-col {
+    font-weight: 600;
+}
+
+.toppers-table .mono-col {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
 /* --- Responsive --- */
 @media (max-width: 768px) {
     .header-content {

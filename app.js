@@ -171,7 +171,10 @@
             
             const resultsActions = document.querySelector('.results-actions');
             if (resultsActions) {
-                resultsActions.style.display = searchType === 'toppers' ? 'none' : 'flex';
+                resultsActions.style.display = 'flex';
+                if (sortBy) {
+                    sortBy.style.display = searchType === 'toppers' ? 'none' : 'block';
+                }
             }
             
             updateCollegeAnalytics(searchType);
@@ -262,7 +265,6 @@
             filteredResults.sort((a, b) => {
                 return (parseFloat(a.rank) || 99999) - (parseFloat(b.rank) || 99999);
             });
-            filteredResults = filteredResults.slice(0, 100);
             return;
         }
 
@@ -277,15 +279,43 @@
     }
 
     function showMoreResults() {
-        const endIdx = Math.min(displayedCount + PAGE_SIZE, filteredResults.length);
+        const currentPageSize = currentTab === 'toppers' ? 100 : PAGE_SIZE;
+        const endIdx = Math.min(displayedCount + currentPageSize, filteredResults.length);
         const fragment = document.createDocumentFragment();
 
-        for (let i = displayedCount; i < endIdx; i++) {
-            const card = createResultCard(filteredResults[i], i);
-            fragment.appendChild(card);
+        if (currentTab === 'toppers') {
+            if (displayedCount === 0) {
+                resultsGrid.innerHTML = `
+                    <div class="table-wrapper">
+                        <table class="toppers-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">Rank</th>
+                                    <th>Name</th>
+                                    <th>Hall Ticket</th>
+                                    <th>Branch</th>
+                                    <th>College Code</th>
+                                </tr>
+                            </thead>
+                            <tbody id="toppersTbody"></tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            const tbody = document.getElementById('toppersTbody');
+            for (let i = displayedCount; i < endIdx; i++) {
+                const tr = createTableCard(filteredResults[i], i);
+                fragment.appendChild(tr);
+            }
+            tbody.appendChild(fragment);
+        } else {
+            for (let i = displayedCount; i < endIdx; i++) {
+                const card = createResultCard(filteredResults[i], i);
+                fragment.appendChild(card);
+            }
+            resultsGrid.appendChild(fragment);
         }
 
-        resultsGrid.appendChild(fragment);
         displayedCount = endIdx;
 
         if (displayedCount < filteredResults.length) {
@@ -294,6 +324,22 @@
         } else {
             resultsFooter.style.display = 'none';
         }
+    }
+
+    function createTableCard(record, index) {
+        const tr = document.createElement('tr');
+        tr.style.animation = 'fadeIn 0.3s ease';
+        tr.style.animationDelay = `${(index % 100) * 10}ms`;
+        tr.style.animationFillMode = 'both';
+
+        tr.innerHTML = `
+            <td class="rank-col">#${record.rank || 'N/A'}</td>
+            <td class="name-col">${escapeHtml(record.name || 'N/A')}</td>
+            <td class="mono-col">${escapeHtml(record.ht || 'N/A')}</td>
+            <td>${escapeHtml(record.bn || record.bc || 'N/A')}</td>
+            <td class="mono-col">${escapeHtml(record.cc || 'N/A')}</td>
+        `;
+        return tr;
     }
 
     function createResultCard(record, index) {
